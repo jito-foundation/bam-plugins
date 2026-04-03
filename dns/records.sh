@@ -1,5 +1,5 @@
 #!/bin/bash
-regions=$(curl -s https://raw.githubusercontent.com/jito-foundation/bam-plugins/refs/heads/feat/testnet-regions/data/testnet-regions.txt)
+regions=$(curl -s https://raw.githubusercontent.com/jito-foundation/bam-plugins/refs/heads/regions/data/testnet-regions.txt)
 for region in $regions; do
     nslookup "$region.testnet.bam.jito.wtf" 2>/dev/null | awk '/^Address/ && !/#/ {
         ip = $2
