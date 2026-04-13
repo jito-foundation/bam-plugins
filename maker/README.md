@@ -11,7 +11,10 @@ We recommend sending price updates to all enabled regions in-order to avoid main
 
 Transactions are sent in an identical binary format to the standard TPU.
 
-This assumes you have sent a configuration to Jito Labs.
+This assumes you have sent a configuration to Jito Labs. Configurations should include per-market:
+- The public key of the signer you intend to use for sending transactions
+- The public key of the writable account being updated for a particular market
+- The instruction data offset and length of the seqno/nonce for the enrolled program
 
 Transaction packets are expected to:
 - Have only a single signer
