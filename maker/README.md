@@ -21,7 +21,8 @@ Transaction packets are expected to:
 - That signer signer is enrolled in the plugin
 - The transaction packet can be associated with a specific market via account keys
 - A nonce/seqno is extractable from the transaction packet
-- Two compute budget instruction specifying the price per compute unit to at least 20 lamports per compute unit
+- A compute budget instruction specifying the price per compute unit to at least 20 lamports per compute unit
+- CPI other than Compute Budget instructions will be rejected by the plugin TPU
 
 ## Examples
 `cargo run --example send_wire_transaction`
