@@ -22,7 +22,8 @@ const PROGRAM_CONFIG_USED_SIZE: usize = size_of::<Address>() * 2
     + size_of::<MemCmp>()
     + size_of::<SignerConfig>() * PROGRAM_SIGNER_COUNT
     + size_of::<MarketConfig>() * MARKET_CONFIG_COUNT
-    + size_of::<ProgramStatus>();
+    + size_of::<ProgramStatus>()
+    + size_of::<MarketUpdateMode>();
 
 const CONFIG_PADDING_SIZE: usize = EXPECTED_CONFIG_ACCOUNT_SIZE - CONFIG_USED_SIZE;
 const PROGRAM_CONFIG_PADDING_SIZE: usize =
@@ -150,6 +151,35 @@ impl Default for ProgramStatus {
     }
 }
 
+#[repr(transparent)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, SchemaWrite, SchemaRead)]
+#[wincode(assert_zero_copy)]
+pub struct MarketUpdateMode(u8);
+
+#[allow(non_upper_case_globals)]
+impl MarketUpdateMode {
+    pub const SingleMarket: Self = Self(0);
+    pub const MultiMarket: Self = Self(1);
+
+    pub fn from_u8(value: u8) -> Result<Self, ProgramError> {
+        match value {
+            0 => Ok(Self::SingleMarket),
+            1 => Ok(Self::MultiMarket),
+            _ => Err(ProgramError::InvalidInstructionData),
+        }
+    }
+
+    pub const fn as_u8(self) -> u8 {
+        self.0
+    }
+}
+
+impl Default for MarketUpdateMode {
+    fn default() -> Self {
+        Self::SingleMarket
+    }
+}
+
 #[repr(C)]
 #[derive(SchemaWrite, SchemaRead)]
 #[wincode(assert_zero_copy)]
@@ -162,6 +192,7 @@ pub struct ProgramConfig {
     pub signer_configs: [SignerConfig; PROGRAM_SIGNER_COUNT],
     pub market_configs: [MarketConfig; MARKET_CONFIG_COUNT],
     pub status: ProgramStatus,
+    pub market_update_mode: MarketUpdateMode,
     pub padding: [u8; PROGRAM_CONFIG_PADDING_SIZE],
 }
 
@@ -174,6 +205,7 @@ impl Default for ProgramConfig {
             signer_configs: core::array::from_fn(|_| SignerConfig::default()),
             market_configs: core::array::from_fn(|_| MarketConfig::default()),
             status: ProgramStatus::default(),
+            market_update_mode: MarketUpdateMode::default(),
             padding: [0u8; PROGRAM_CONFIG_PADDING_SIZE],
         }
     }

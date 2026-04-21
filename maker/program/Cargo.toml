@@ -14,6 +14,7 @@ pinocchio-system = "0.5.0"
 solana-loader-v3-interface = { version = "3.0.0", features = ["serde"] }
 solana-program-error = "3.0.1"
 solana-program-log = "1.1.0"
+solana-sdk-ids = "2.2"
 wincode = { version = "0.5.3", default-features = false, features = ["alloc", "derive"] }
 
 
@@ -25,7 +26,6 @@ solana-instruction = "2.2"
 solana-program-test = "2.2"
 solana-pubkey = "2.2"
 solana-sdk = "2.2"
-solana-sdk-ids = "2.2"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
 [[test]]

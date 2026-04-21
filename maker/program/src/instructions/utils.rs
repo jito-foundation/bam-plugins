@@ -15,6 +15,11 @@ pub fn verify_upgrade_authority(
     program_account: &AccountView,
     executable_data: &AccountView,
 ) -> ProgramResult {
+    let loader_id = Address::from(solana_sdk_ids::bpf_loader_upgradeable::id().to_bytes());
+    if !program_account.owned_by(&loader_id) || !executable_data.owned_by(&loader_id) {
+        return Err(ProgramError::InvalidAccountOwner);
+    }
+
     let prog_data = program_account.try_borrow()?;
     let program_state: UpgradeableLoaderState =
         deserialize(&prog_data).map_err(|_| ProgramError::InvalidAccountData)?;

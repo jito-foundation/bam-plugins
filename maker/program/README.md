@@ -42,6 +42,7 @@ On-chain `ProgramStatus` values:
 - program-level `seqno_instruction_data_offset`
 - 32 market config slots
 - `status`
+- `market_update_mode` (`SingleMarket` or `MultiMarket`, stored as `u8`)
 
 Each `MarketConfig` stores only:
 - `market_id` - Automatically derived from `program_id` and market index

@@ -1,6 +1,6 @@
 use bincode::serialize;
 use maker_registry::state::{
-    Config, ProgramConfig, ProgramStatus, CONFIG_SIZE, PROGRAM_CONFIG_SIZE,
+    Config, MarketUpdateMode, ProgramConfig, ProgramStatus, CONFIG_SIZE, PROGRAM_CONFIG_SIZE,
 };
 use solana_loader_v3_interface::state::UpgradeableLoaderState;
 use solana_program_test::{ProgramTest, ProgramTestContext};
@@ -92,14 +92,14 @@ fn make_upgrade_authority_accounts(
     let program_account = Account {
         lamports: 1_000_000,
         data: program_account_data,
-        owner: system_program::id(),
+        owner: solana_sdk_ids::bpf_loader_upgradeable::id(),
         executable: false,
         rent_epoch: 0,
     };
     let executable_data_account = Account {
         lamports: 1_000_000,
         data: exec_data_bytes,
-        owner: system_program::id(),
+        owner: solana_sdk_ids::bpf_loader_upgradeable::id(),
         executable: false,
         rent_epoch: 0,
     };
@@ -113,6 +113,7 @@ async fn enroll_program(
     config_pda: Pubkey,
     authority: Pubkey,
     extra_signer: Option<&Keypair>,
+    market_update_mode: MarketUpdateMode,
 ) -> EnrolledProgramContext {
     let target_program_id = Pubkey::new_unique();
     let executable_data_key = Pubkey::new_unique();
@@ -128,6 +129,7 @@ async fn enroll_program(
     let mut instruction_data = vec![1u8];
     instruction_data.extend_from_slice(&target_program_id.to_bytes());
     instruction_data.push(bump);
+    instruction_data.push(market_update_mode.as_u8());
 
     let instruction = Instruction::new_with_bytes(
         program_id,
@@ -368,7 +370,15 @@ async fn init_program_config_enrolls_a_program() {
     } = setup_initialized_program().await;
     let payer_pubkey = context.payer.pubkey();
 
-    let enrolled = enroll_program(&mut context, program_id, config_pda, payer_pubkey, None).await;
+    let enrolled = enroll_program(
+        &mut context,
+        program_id,
+        config_pda,
+        payer_pubkey,
+        None,
+        MarketUpdateMode::MultiMarket,
+    )
+    .await;
 
     let program_config_account = context
         .banks_client
@@ -385,6 +395,10 @@ async fn init_program_config_enrolls_a_program() {
         enrolled.target_program_id.to_bytes().into()
     );
     assert_eq!(program_config.status, ProgramStatus::Enrolled);
+    assert_eq!(
+        program_config.market_update_mode,
+        MarketUpdateMode::MultiMarket
+    );
 }
 
 #[tokio::test]
@@ -396,7 +410,15 @@ async fn init_enroll_and_update_market_config() {
     } = setup_initialized_program().await;
     let payer_pubkey = context.payer.pubkey();
 
-    let enrolled = enroll_program(&mut context, program_id, config_pda, payer_pubkey, None).await;
+    let enrolled = enroll_program(
+        &mut context,
+        program_id,
+        config_pda,
+        payer_pubkey,
+        None,
+        MarketUpdateMode::SingleMarket,
+    )
+    .await;
     let index = 0u8;
     let mut instruction_data = vec![2u8, index];
     instruction_data.extend_from_slice(&[9u8; 32]);
@@ -456,7 +478,15 @@ async fn init_enroll_assign_delegate_and_update_market_config_as_delegate() {
     } = setup_initialized_program().await;
     let payer_pubkey = context.payer.pubkey();
 
-    let enrolled = enroll_program(&mut context, program_id, config_pda, payer_pubkey, None).await;
+    let enrolled = enroll_program(
+        &mut context,
+        program_id,
+        config_pda,
+        payer_pubkey,
+        None,
+        MarketUpdateMode::SingleMarket,
+    )
+    .await;
     let delegate_authority = Keypair::new();
     let index = 0u8;
     assign_delegate_authority(
@@ -539,7 +569,15 @@ async fn init_enroll_and_unenroll_as_upgrade_authority() {
     } = setup_initialized_program().await;
     let payer_pubkey = context.payer.pubkey();
 
-    let enrolled = enroll_program(&mut context, program_id, config_pda, payer_pubkey, None).await;
+    let enrolled = enroll_program(
+        &mut context,
+        program_id,
+        config_pda,
+        payer_pubkey,
+        None,
+        MarketUpdateMode::SingleMarket,
+    )
+    .await;
 
     let instruction = Instruction::new_with_bytes(
         program_id,
@@ -580,7 +618,15 @@ async fn init_enroll_assign_delegate_and_unenroll_as_delegate() {
     } = setup_initialized_program().await;
     let payer_pubkey = context.payer.pubkey();
 
-    let enrolled = enroll_program(&mut context, program_id, config_pda, payer_pubkey, None).await;
+    let enrolled = enroll_program(
+        &mut context,
+        program_id,
+        config_pda,
+        payer_pubkey,
+        None,
+        MarketUpdateMode::SingleMarket,
+    )
+    .await;
     let delegate_authority = Keypair::new();
     assign_delegate_authority(
         &mut context,
@@ -661,6 +707,7 @@ async fn init_enroll_and_update_market_config_as_override_authority() {
         config_pda,
         override_authority.pubkey(),
         Some(&override_authority),
+        MarketUpdateMode::SingleMarket,
     )
     .await;
     let index = 0u8;
@@ -716,7 +763,15 @@ async fn init_enroll_and_update_program_signer() {
     let payer_pubkey = context.payer.pubkey();
     let new_signer = Pubkey::new_unique();
 
-    let enrolled = enroll_program(&mut context, program_id, config_pda, payer_pubkey, None).await;
+    let enrolled = enroll_program(
+        &mut context,
+        program_id,
+        config_pda,
+        payer_pubkey,
+        None,
+        MarketUpdateMode::SingleMarket,
+    )
+    .await;
     update_program_signer(
         &mut context,
         program_id,
@@ -749,7 +804,15 @@ async fn init_enroll_assign_delegate_and_update_program_memcmp_as_delegate() {
     } = setup_initialized_program().await;
     let payer_pubkey = context.payer.pubkey();
 
-    let enrolled = enroll_program(&mut context, program_id, config_pda, payer_pubkey, None).await;
+    let enrolled = enroll_program(
+        &mut context,
+        program_id,
+        config_pda,
+        payer_pubkey,
+        None,
+        MarketUpdateMode::SingleMarket,
+    )
+    .await;
     let delegate_authority = Keypair::new();
     assign_delegate_authority(
         &mut context,
@@ -821,6 +884,7 @@ async fn init_enroll_and_update_program_signer_as_override_authority() {
         config_pda,
         override_authority.pubkey(),
         Some(&override_authority),
+        MarketUpdateMode::SingleMarket,
     )
     .await;
 
@@ -855,7 +919,15 @@ async fn init_enroll_and_delete_program_signer() {
     } = setup_initialized_program().await;
     let payer_pubkey = context.payer.pubkey();
 
-    let enrolled = enroll_program(&mut context, program_id, config_pda, payer_pubkey, None).await;
+    let enrolled = enroll_program(
+        &mut context,
+        program_id,
+        config_pda,
+        payer_pubkey,
+        None,
+        MarketUpdateMode::SingleMarket,
+    )
+    .await;
     update_program_signer(
         &mut context,
         program_id,
@@ -894,7 +966,15 @@ async fn init_enroll_and_delete_market_config() {
     } = setup_initialized_program().await;
     let payer_pubkey = context.payer.pubkey();
 
-    let enrolled = enroll_program(&mut context, program_id, config_pda, payer_pubkey, None).await;
+    let enrolled = enroll_program(
+        &mut context,
+        program_id,
+        config_pda,
+        payer_pubkey,
+        None,
+        MarketUpdateMode::SingleMarket,
+    )
+    .await;
     let index = 4u8;
     let mut instruction_data = vec![2u8, index];
     instruction_data.extend_from_slice(&[9u8; 32]);
@@ -989,7 +1069,15 @@ async fn init_enroll_assign_delegate_and_unenroll_as_override_authority() {
     context.set_account(&delegate_authority.pubkey(), &blank_signer_account.into());
     store_override_authority(&mut context, config_pda, override_authority.pubkey()).await;
 
-    let enrolled = enroll_program(&mut context, program_id, config_pda, payer_pubkey, None).await;
+    let enrolled = enroll_program(
+        &mut context,
+        program_id,
+        config_pda,
+        payer_pubkey,
+        None,
+        MarketUpdateMode::SingleMarket,
+    )
+    .await;
     assign_delegate_authority(
         &mut context,
         program_id,

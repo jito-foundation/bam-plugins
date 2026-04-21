@@ -30,14 +30,14 @@ fn make_upgrade_authority_accounts(
     let program_account = Account {
         lamports: 1_000_000,
         data: program_account_data,
-        owner: solana_sdk_ids::system_program::id(),
+        owner: solana_sdk_ids::bpf_loader_upgradeable::id(),
         executable: false,
         rent_epoch: 0,
     };
     let executable_data_account = Account {
         lamports: 1_000_000,
         data: exec_data_bytes,
-        owner: solana_sdk_ids::system_program::id(),
+        owner: solana_sdk_ids::bpf_loader_upgradeable::id(),
         executable: false,
         rent_epoch: 0,
     };
@@ -209,7 +209,7 @@ fn test_override_unenroll() {
 
 #[test]
 fn test_init_program_config() {
-    use crate::state::{ProgramConfig, ProgramStatus};
+    use crate::state::{MarketUpdateMode, ProgramConfig, ProgramStatus};
 
     let program_id = Pubkey::new_unique();
     let mollusk = Mollusk::new(&program_id, "target/deploy/maker_registry");
@@ -235,10 +235,11 @@ fn test_init_program_config() {
         rent_epoch: 0,
     };
 
-    // Discriminant 1 = init_program_config, followed by target_program_id (32 bytes) and bump (1 byte)
+    // Discriminant 1 = init_program_config, followed by target_program_id (32 bytes), bump (1 byte), and market_update_mode (1 byte)
     let mut instruction_data = vec![1u8];
     instruction_data.extend_from_slice(&target_program_key.to_bytes());
     instruction_data.push(bump);
+    instruction_data.push(MarketUpdateMode::MultiMarket.as_u8());
 
     let instruction = Instruction::new_with_bytes(
         program_id,
@@ -288,6 +289,10 @@ fn test_init_program_config() {
         target_program_key.to_bytes().into()
     );
     assert_eq!(resulting_state.status, ProgramStatus::Enrolled);
+    assert_eq!(
+        resulting_state.market_update_mode,
+        MarketUpdateMode::MultiMarket
+    );
 }
 
 #[test]
@@ -522,6 +527,79 @@ fn test_assign_delegate_authority_as_override_authority() {
 }
 
 #[test]
+fn test_assign_delegate_authority_as_upgrade_authority() {
+    use crate::state::ProgramConfig;
+
+    let program_id = Pubkey::new_unique();
+    let mollusk = Mollusk::new(&program_id, "target/deploy/maker_registry");
+
+    let upgrade_authority = Pubkey::new_unique();
+    let delegate_authority = Pubkey::new_unique();
+    let target_program_key = Pubkey::new_unique();
+    let executable_data_key = Pubkey::new_unique();
+    let config_key = Pubkey::new_unique();
+    let program_config_key = Pubkey::new_unique();
+
+    let config_account = Account {
+        lamports: 10_000_000,
+        data: vec![0u8; CONFIG_SIZE],
+        owner: program_id,
+        executable: false,
+        rent_epoch: 0,
+    };
+
+    let mut program_config_struct = ProgramConfig::default();
+    program_config_struct.program_id = target_program_key.to_bytes().into();
+    let program_config_data = serialize_bytes(&program_config_struct);
+
+    let program_config_account = Account {
+        lamports: 10_000_000,
+        data: program_config_data,
+        owner: program_id,
+        executable: false,
+        rent_epoch: 0,
+    };
+    let authority_account = Account::new(1_000_000, 0, &solana_sdk_ids::system_program::id());
+    let (program_account, executable_data_account) =
+        make_upgrade_authority_accounts(&upgrade_authority, &executable_data_key);
+
+    let instruction = Instruction::new_with_bytes(
+        program_id,
+        &[&[7u8], delegate_authority.as_ref()].concat(),
+        vec![
+            AccountMeta::new_readonly(upgrade_authority, true),
+            AccountMeta::new_readonly(config_key, false),
+            AccountMeta::new(program_config_key, false),
+            AccountMeta::new_readonly(target_program_key, false),
+            AccountMeta::new_readonly(executable_data_key, false),
+        ],
+    );
+
+    let accounts = vec![
+        (upgrade_authority, authority_account),
+        (config_key, config_account),
+        (program_config_key, program_config_account),
+        (target_program_key, program_account),
+        (executable_data_key, executable_data_account),
+    ];
+
+    let result =
+        mollusk.process_and_validate_instruction(&instruction, &accounts, &[Check::success()]);
+
+    let (_, resulting_program_config) = result
+        .resulting_accounts
+        .iter()
+        .find(|(k, _)| k == &program_config_key)
+        .expect("program_config account not found in result");
+
+    let resulting_state = ProgramConfig::load(&resulting_program_config.data).unwrap();
+    assert_eq!(
+        resulting_state.delegate_authority,
+        delegate_authority.to_bytes().into()
+    );
+}
+
+#[test]
 fn test_update_market_config_as_delegate_authority() {
     use crate::state::{ProgramConfig, ProgramStatus};
 
@@ -677,7 +755,7 @@ fn test_upgrade_authority_unenroll_as_delegate_authority() {
 
 #[test]
 fn test_init_program_config_as_override_authority() {
-    use crate::state::{Config, ProgramConfig, ProgramStatus};
+    use crate::state::{Config, MarketUpdateMode, ProgramConfig, ProgramStatus};
 
     let program_id = Pubkey::new_unique();
     let mollusk = Mollusk::new(&program_id, "target/deploy/maker_registry");
@@ -710,6 +788,7 @@ fn test_init_program_config_as_override_authority() {
     let mut instruction_data = vec![1u8];
     instruction_data.extend_from_slice(&target_program_key.to_bytes());
     instruction_data.push(bump);
+    instruction_data.push(MarketUpdateMode::SingleMarket.as_u8());
 
     let instruction = Instruction::new_with_bytes(
         program_id,
@@ -976,6 +1055,8 @@ fn test_activate_as_status_authority() {
 
 #[test]
 fn test_init_program_config_rejects_unauthorized_authority() {
+    use crate::state::MarketUpdateMode;
+
     let program_id = Pubkey::new_unique();
     let mollusk = Mollusk::new(&program_id, "target/deploy/maker_registry");
     let rent_sysvar = mollusk.sysvars.keyed_account_for_rent_sysvar();
@@ -1004,6 +1085,7 @@ fn test_init_program_config_rejects_unauthorized_authority() {
     let mut instruction_data = vec![1u8];
     instruction_data.extend_from_slice(&target_program_key.to_bytes());
     instruction_data.push(bump);
+    instruction_data.push(MarketUpdateMode::SingleMarket.as_u8());
 
     let instruction = Instruction::new_with_bytes(
         program_id,
@@ -1031,6 +1113,189 @@ fn test_init_program_config_rejects_unauthorized_authority() {
 
     let result = mollusk.process_instruction(&instruction, &accounts);
     assert_program_error(result, InstructionError::MissingRequiredSignature);
+}
+
+#[test]
+fn test_init_program_config_rejects_invalid_market_update_mode() {
+    let program_id = Pubkey::new_unique();
+    let mollusk = Mollusk::new(&program_id, "target/deploy/maker_registry");
+    let rent_sysvar = mollusk.sysvars.keyed_account_for_rent_sysvar();
+
+    let authority = Pubkey::new_unique();
+    let config_key = Pubkey::new_unique();
+    let target_program_key = Pubkey::new_unique();
+    let executable_data_key = Pubkey::new_unique();
+
+    let (program_account, executable_data_account) =
+        make_upgrade_authority_accounts(&authority, &executable_data_key);
+
+    let (program_config_pda, bump) =
+        Pubkey::find_program_address(&[&target_program_key.to_bytes()], &program_id);
+
+    let authority_account = Account::new(10_000_000_000, 0, &solana_sdk_ids::system_program::id());
+    let config_account = Account {
+        lamports: 10_000_000,
+        data: vec![0u8; CONFIG_SIZE],
+        owner: program_id,
+        executable: false,
+        rent_epoch: 0,
+    };
+
+    let mut instruction_data = vec![1u8];
+    instruction_data.extend_from_slice(&target_program_key.to_bytes());
+    instruction_data.push(bump);
+    instruction_data.push(2u8);
+
+    let instruction = Instruction::new_with_bytes(
+        program_id,
+        &instruction_data,
+        vec![
+            AccountMeta::new(authority, true),
+            AccountMeta::new(program_config_pda, false),
+            AccountMeta::new_readonly(config_key, false),
+            AccountMeta::new_readonly(target_program_key, false),
+            AccountMeta::new_readonly(executable_data_key, false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::id(), false),
+            AccountMeta::new_readonly(rent_sysvar.0, false),
+        ],
+    );
+
+    let accounts = vec![
+        (authority, authority_account),
+        (program_config_pda, Account::default()),
+        (config_key, config_account),
+        (target_program_key, program_account),
+        (executable_data_key, executable_data_account),
+        keyed_account_for_system_program(),
+        rent_sysvar,
+    ];
+
+    let result = mollusk.process_instruction(&instruction, &accounts);
+    assert_program_error(result, InstructionError::InvalidInstructionData);
+}
+
+#[test]
+fn test_init_program_config_rejects_program_account_not_owned_by_upgradeable_loader() {
+    use crate::state::MarketUpdateMode;
+
+    let program_id = Pubkey::new_unique();
+    let mollusk = Mollusk::new(&program_id, "target/deploy/maker_registry");
+    let rent_sysvar = mollusk.sysvars.keyed_account_for_rent_sysvar();
+
+    let authority = Pubkey::new_unique();
+    let config_key = Pubkey::new_unique();
+    let target_program_key = Pubkey::new_unique();
+    let executable_data_key = Pubkey::new_unique();
+
+    let (mut program_account, executable_data_account) =
+        make_upgrade_authority_accounts(&authority, &executable_data_key);
+    program_account.owner = solana_sdk_ids::system_program::id();
+
+    let (program_config_pda, bump) =
+        Pubkey::find_program_address(&[&target_program_key.to_bytes()], &program_id);
+
+    let authority_account = Account::new(10_000_000_000, 0, &solana_sdk_ids::system_program::id());
+    let config_account = Account {
+        lamports: 10_000_000,
+        data: vec![0u8; CONFIG_SIZE],
+        owner: program_id,
+        executable: false,
+        rent_epoch: 0,
+    };
+
+    let mut instruction_data = vec![1u8];
+    instruction_data.extend_from_slice(&target_program_key.to_bytes());
+    instruction_data.push(bump);
+    instruction_data.push(MarketUpdateMode::SingleMarket.as_u8());
+
+    let instruction = Instruction::new_with_bytes(
+        program_id,
+        &instruction_data,
+        vec![
+            AccountMeta::new(authority, true),
+            AccountMeta::new(program_config_pda, false),
+            AccountMeta::new_readonly(config_key, false),
+            AccountMeta::new_readonly(target_program_key, false),
+            AccountMeta::new_readonly(executable_data_key, false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::id(), false),
+            AccountMeta::new_readonly(rent_sysvar.0, false),
+        ],
+    );
+
+    let accounts = vec![
+        (authority, authority_account),
+        (program_config_pda, Account::default()),
+        (config_key, config_account),
+        (target_program_key, program_account),
+        (executable_data_key, executable_data_account),
+        keyed_account_for_system_program(),
+        rent_sysvar,
+    ];
+
+    let result = mollusk.process_instruction(&instruction, &accounts);
+    assert_program_error(result, InstructionError::InvalidAccountOwner);
+}
+
+#[test]
+fn test_init_program_config_rejects_programdata_not_owned_by_upgradeable_loader() {
+    use crate::state::MarketUpdateMode;
+
+    let program_id = Pubkey::new_unique();
+    let mollusk = Mollusk::new(&program_id, "target/deploy/maker_registry");
+    let rent_sysvar = mollusk.sysvars.keyed_account_for_rent_sysvar();
+
+    let authority = Pubkey::new_unique();
+    let config_key = Pubkey::new_unique();
+    let target_program_key = Pubkey::new_unique();
+    let executable_data_key = Pubkey::new_unique();
+
+    let (program_account, mut executable_data_account) =
+        make_upgrade_authority_accounts(&authority, &executable_data_key);
+    executable_data_account.owner = solana_sdk_ids::system_program::id();
+
+    let (program_config_pda, bump) =
+        Pubkey::find_program_address(&[&target_program_key.to_bytes()], &program_id);
+
+    let authority_account = Account::new(10_000_000_000, 0, &solana_sdk_ids::system_program::id());
+    let config_account = Account {
+        lamports: 10_000_000,
+        data: vec![0u8; CONFIG_SIZE],
+        owner: program_id,
+        executable: false,
+        rent_epoch: 0,
+    };
+
+    let mut instruction_data = vec![1u8];
+    instruction_data.extend_from_slice(&target_program_key.to_bytes());
+    instruction_data.push(bump);
+    instruction_data.push(MarketUpdateMode::SingleMarket.as_u8());
+
+    let instruction = Instruction::new_with_bytes(
+        program_id,
+        &instruction_data,
+        vec![
+            AccountMeta::new(authority, true),
+            AccountMeta::new(program_config_pda, false),
+            AccountMeta::new_readonly(config_key, false),
+            AccountMeta::new_readonly(target_program_key, false),
+            AccountMeta::new_readonly(executable_data_key, false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::id(), false),
+            AccountMeta::new_readonly(rent_sysvar.0, false),
+        ],
+    );
+
+    let accounts = vec![
+        (authority, authority_account),
+        (program_config_pda, Account::default()),
+        (config_key, config_account),
+        (target_program_key, program_account),
+        (executable_data_key, executable_data_account),
+        keyed_account_for_system_program(),
+        rent_sysvar,
+    ];
+
+    let result = mollusk.process_instruction(&instruction, &accounts);
+    assert_program_error(result, InstructionError::InvalidAccountOwner);
 }
 
 #[test]
@@ -1628,6 +1893,156 @@ fn test_admin_change_authority_rejects_invalid_field() {
 
     let result = mollusk.process_instruction(&instruction, &accounts);
     assert_program_error(result, InstructionError::InvalidInstructionData);
+}
+
+#[test]
+fn test_admin_change_authority_updates_override_authority() {
+    use crate::state::Config;
+
+    let program_id = Pubkey::new_unique();
+    let mollusk = Mollusk::new(&program_id, "target/deploy/maker_registry");
+
+    let admin = Pubkey::new_unique();
+    let config_key = Pubkey::new_unique();
+    let new_override_authority = Pubkey::new_unique();
+
+    let mut config_struct = Config::default();
+    config_struct.admin_authority = admin.to_bytes().into();
+    let config_data = serialize_bytes(&config_struct);
+
+    let admin_account = Account::new(1_000_000, 0, &solana_sdk_ids::system_program::id());
+    let config_account = Account {
+        lamports: 10_000_000,
+        data: config_data,
+        owner: program_id,
+        executable: false,
+        rent_epoch: 0,
+    };
+
+    let instruction = Instruction::new_with_bytes(
+        program_id,
+        &[&[6u8, 1u8][..], new_override_authority.as_ref()].concat(),
+        vec![
+            AccountMeta::new_readonly(admin, true),
+            AccountMeta::new(config_key, false),
+        ],
+    );
+
+    let accounts = vec![(admin, admin_account), (config_key, config_account)];
+
+    let result =
+        mollusk.process_and_validate_instruction(&instruction, &accounts, &[Check::success()]);
+
+    let (_, resulting_config) = result
+        .resulting_accounts
+        .iter()
+        .find(|(k, _)| k == &config_key)
+        .expect("config account not found in result");
+
+    let resulting_state = Config::load(&resulting_config.data).unwrap();
+    assert_eq!(
+        resulting_state.override_authority,
+        new_override_authority.to_bytes().into()
+    );
+}
+
+#[test]
+fn test_admin_change_authority_updates_status_authority() {
+    use crate::state::Config;
+
+    let program_id = Pubkey::new_unique();
+    let mollusk = Mollusk::new(&program_id, "target/deploy/maker_registry");
+
+    let admin = Pubkey::new_unique();
+    let config_key = Pubkey::new_unique();
+    let new_status_authority = Pubkey::new_unique();
+
+    let mut config_struct = Config::default();
+    config_struct.admin_authority = admin.to_bytes().into();
+    let config_data = serialize_bytes(&config_struct);
+
+    let admin_account = Account::new(1_000_000, 0, &solana_sdk_ids::system_program::id());
+    let config_account = Account {
+        lamports: 10_000_000,
+        data: config_data,
+        owner: program_id,
+        executable: false,
+        rent_epoch: 0,
+    };
+
+    let instruction = Instruction::new_with_bytes(
+        program_id,
+        &[&[6u8, 2u8][..], new_status_authority.as_ref()].concat(),
+        vec![
+            AccountMeta::new_readonly(admin, true),
+            AccountMeta::new(config_key, false),
+        ],
+    );
+
+    let accounts = vec![(admin, admin_account), (config_key, config_account)];
+
+    let result =
+        mollusk.process_and_validate_instruction(&instruction, &accounts, &[Check::success()]);
+
+    let (_, resulting_config) = result
+        .resulting_accounts
+        .iter()
+        .find(|(k, _)| k == &config_key)
+        .expect("config account not found in result");
+
+    let resulting_state = Config::load(&resulting_config.data).unwrap();
+    assert_eq!(
+        resulting_state.status_authority,
+        new_status_authority.to_bytes().into()
+    );
+}
+
+#[test]
+fn test_admin_change_authority_updates_admin_authority() {
+    use crate::state::Config;
+
+    let program_id = Pubkey::new_unique();
+    let mollusk = Mollusk::new(&program_id, "target/deploy/maker_registry");
+
+    let admin = Pubkey::new_unique();
+    let config_key = Pubkey::new_unique();
+    let new_admin = Pubkey::new_unique();
+
+    let mut config_struct = Config::default();
+    config_struct.admin_authority = admin.to_bytes().into();
+    let config_data = serialize_bytes(&config_struct);
+
+    let admin_account = Account::new(1_000_000, 0, &solana_sdk_ids::system_program::id());
+    let config_account = Account {
+        lamports: 10_000_000,
+        data: config_data,
+        owner: program_id,
+        executable: false,
+        rent_epoch: 0,
+    };
+
+    let instruction = Instruction::new_with_bytes(
+        program_id,
+        &[&[6u8, 0u8][..], new_admin.as_ref()].concat(),
+        vec![
+            AccountMeta::new_readonly(admin, true),
+            AccountMeta::new(config_key, false),
+        ],
+    );
+
+    let accounts = vec![(admin, admin_account), (config_key, config_account)];
+
+    let result =
+        mollusk.process_and_validate_instruction(&instruction, &accounts, &[Check::success()]);
+
+    let (_, resulting_config) = result
+        .resulting_accounts
+        .iter()
+        .find(|(k, _)| k == &config_key)
+        .expect("config account not found in result");
+
+    let resulting_state = Config::load(&resulting_config.data).unwrap();
+    assert_eq!(resulting_state.admin_authority, new_admin.to_bytes().into());
 }
 
 #[test]

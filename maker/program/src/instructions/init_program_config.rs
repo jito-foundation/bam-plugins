@@ -8,7 +8,7 @@ use wincode::Deserialize as _;
 
 use crate::{
     instructions::utils::verify_upgrade_authority_or_override_authority,
-    state::{ProgramConfig, ProgramStatus, PDA_SEED_COUNT, PROGRAM_CONFIG_SIZE},
+    state::{MarketUpdateMode, ProgramConfig, ProgramStatus, PDA_SEED_COUNT, PROGRAM_CONFIG_SIZE},
 };
 
 wincode::pod_wrapper! {
@@ -21,6 +21,7 @@ struct InitProgramConfigData {
     #[wincode(with = "InstructionPodAddress")]
     target_program_id: Address,
     bump: u8,
+    market_update_mode: u8,
 }
 
 const IXN_DATA_LEN: usize = core::mem::size_of::<InitProgramConfigData>();
@@ -32,7 +33,7 @@ const IXN_DATA_LEN: usize = core::mem::size_of::<InitProgramConfigData>();
 //   - program_account address matches the target_program_id from instruction data
 //   - config is owned by this program
 //   - payer is the upgrade authority or config.override_authority (via util)
-//   returns the (target_program_id, bump) from instruction data
+//   returns the (target_program_id, bump, market_update_mode) from instruction data
 fn checks(
     program_id: &Address,
     payer: &AccountView,
@@ -41,7 +42,7 @@ fn checks(
     program_account: &AccountView,
     executable_data: &AccountView,
     data: &[u8],
-) -> Result<(Address, u8), ProgramError> {
+) -> Result<(Address, u8, MarketUpdateMode), ProgramError> {
     if !payer.is_signer() {
         return Err(ProgramError::MissingRequiredSignature);
     }
@@ -54,6 +55,7 @@ fn checks(
         .map_err(|_| ProgramError::InvalidInstructionData)?;
     let target_program_id = instruction_data.target_program_id;
     let bump = instruction_data.bump;
+    let market_update_mode = MarketUpdateMode::from_u8(instruction_data.market_update_mode)?;
 
     let expected = pinocchio_pubkey::derive_address(
         &[target_program_id.as_ref()],
@@ -79,7 +81,7 @@ fn checks(
         executable_data,
     )?;
 
-    Ok((target_program_id, bump))
+    Ok((target_program_id, bump, market_update_mode))
 }
 
 /// Accounts:
@@ -91,7 +93,7 @@ fn checks(
 ///   5. `[]`                 system_program
 ///   6. `[]`                 rent_sysvar
 ///
-/// Instruction data: `[target_program_id: Address, bump: u8]` (33 bytes)
+/// Instruction data: `[target_program_id: Address, bump: u8, market_update_mode: u8]` (34 bytes)
 pub fn process(program_id: &Address, accounts: &[AccountView], data: &[u8]) -> ProgramResult {
     let [payer, program_config, config, program_account, executable_data, _system_program, rent_sysvar] =
         accounts
@@ -99,7 +101,7 @@ pub fn process(program_id: &Address, accounts: &[AccountView], data: &[u8]) -> P
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    let (target_program_id, bump) = checks(
+    let (target_program_id, bump, market_update_mode) = checks(
         program_id,
         payer,
         program_config,
@@ -130,6 +132,7 @@ pub fn process(program_id: &Address, accounts: &[AccountView], data: &[u8]) -> P
         let program_config_state = ProgramConfig::load_mut(&mut program_config_data)?;
         program_config_state.program_id = target_program_id;
         program_config_state.status = ProgramStatus::Enrolled;
+        program_config_state.market_update_mode = market_update_mode;
     }
 
     Ok(())
