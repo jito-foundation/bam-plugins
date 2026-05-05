@@ -1,9 +1,7 @@
 # BAM Maker Client
-This repository contains an example implementation of the client for the BAM plugin
-TPU Maker transactions. The code contained in here is meant to provide an example of how to send updates to all BAM Nodes with plugins enabled.
+This repository contains resources for onboarding to the BAM MPP Plugin.
 
-The Plugin TPU operates as a UDP server and will expect wire format Solana transactions
-exactly as they are received on UDP TPUs.
+The Plugin TPU operates as a UDP server and will expect wire format Solana transactions exactly as they are received on UDP TPUs.
 
 We recommend sending price updates to all enabled regions in-order to avoid maintaining complex leader tracking logic.
 
@@ -24,6 +22,11 @@ Transaction packets are expected to:
 - A compute budget instruction specifying the price per compute unit to at least 20 lamports per compute unit
 - Instructions programs other than the enrolled program and Compute Budget will be rejected by the plugin TPU
 - Writes to accounts other than enrolled writable accounts will be rejected by the plugin TPU
+
+## Recommendations
+- Since Maker transactions are prioritized for top of the batch, the loaded accounts data size instruction is often unecessary when considering the minimum compute unit price of 20 lamports per compute unit
+- To avoid complex leader tracking logic, we recommend sending price updates to all enabled regions
+
 
 ## Enabled Testnet Regions
 
