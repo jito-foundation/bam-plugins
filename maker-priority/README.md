@@ -1,4 +1,4 @@
-# BAM Maker Client
+# MPP - Maker Prioritization Plugin
 This repository contains resources for onboarding to the BAM MPP Plugin.
 
 The Plugin TPU operates as a UDP server and will expect wire format Solana transactions exactly as they are received on UDP TPUs.
