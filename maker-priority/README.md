@@ -27,6 +27,17 @@ Transaction packets are expected to:
 - Since Maker transactions are prioritized for top of the batch, the loaded accounts data size instruction is often unecessary when considering the minimum compute unit price of 20 lamports per compute unit
 - To avoid complex leader tracking logic, we recommend sending price updates to all enabled regions
 
+## Am I Enrolled? 
+
+Query a specific BAM Node to see if your signer and program are enrolled.
+
+```
+curl -sS http://frankfurt.mainnet.bam.jito.wtf:9090/api/v1/mpp/config
+```
+
+## API Transactions Endpoint
+
+Coming soon.
 
 ## Enabled Testnet Regions
 
