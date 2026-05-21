@@ -76,8 +76,7 @@ Query for events related to a specific transaction signature. Event types includ
 - `forwarded` - The transaction was forwarded to the connected leader for potential inclusion in the block. If a transaction was not forwarded, it was likely received too late in the leader rotation.
 - `commit_attempted` - The connected leader attempted to commit the transaction state. This event will include a reason for failure if the transaction was not committed.
 
-TransactionEventResponse
-
+**TransactionEventResponse**
 ```
 struct TransactionEventResponse {
     pub timestamp: u64,
@@ -92,8 +91,7 @@ struct TransactionEventResponse {
 }
 ```
 
-Example query and response:
-
+**Example query and response**
 ```
 curl -sS "https://explorer.bam.dev/api/v1/mpp/transaction?txSignature=8Y99GGBg8u4nqLuVSdyCiooc1vGJtwXEd2MQxmAnj9u2GaSznoDxhYuH9m5z1P4UTrb6YGNjpFFGHNkLwUvJvtn" | jq .
 [
