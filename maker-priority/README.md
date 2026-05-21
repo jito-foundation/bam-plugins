@@ -91,6 +91,10 @@ GET /api/v1/mpp/transaction?txSignature={txSignature}
 
 **TransactionEventResponse**
 ```rust
+struct TransactionResponse {
+    pub events: Vec<TransactionEventResponse>,
+}
+
 struct TransactionEventResponse {
     pub timestamp: u64,
     pub signature: String,
