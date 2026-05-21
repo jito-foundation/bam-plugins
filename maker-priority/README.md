@@ -95,7 +95,7 @@ struct TransactionResponse {
     pub events: Vec<TransactionEventResponse>,
 }
 
-struct TransactionEventResponse {
+struct TransactionEvent {
     pub timestamp: u64,
     pub signature: String,
     pub slot: u64,
