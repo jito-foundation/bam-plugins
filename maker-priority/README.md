@@ -68,7 +68,7 @@ curl -sS http://frankfurt.mainnet.bam.jito.wtf:9090/api/v1/mpp/config
 
 This endpoint is designed to provide insight into the lifecycle of an MPP transaction within the BAM node. This endpoint returns transaction events exclusively for transactions that have passed MPP checks in the plugin TPU and is not a general transaction events data source.
 
-**Important**: This endpoint is heavily rate-limited and is intended solely for MPP failed transaction debugging. The rate-limit is set to 10 requests over a 10 second window.
+**Important**: This endpoint is heavily rate-limited and is intended solely for MPP failed transaction debugging. The rate-limit is set to 10 requests over 10 seconds.
 
 Query for events related to a specific transaction signature. Event types include:
 
@@ -90,6 +90,16 @@ struct TransactionEventResponse {
     pub entrypoint: String,
 }
 ```
+**Commit Attempt Statuses**
+- `COMMITTED`
+- `ALREADY_PROCESSED`
+- `INVALID_ACCOUNT_FOR_FEE`
+- `ACCOUNT_NOT_FOUND`
+- `OUTSIDE_LEADER_SLOT`
+- `BLOCKHASH_NOT_FOUND`
+- `POH_TIMEOUT`
+- `WOULD_EXCEED_MAX_ACCOUNT_COST_LIMIT`
+- `MAX_LOADED_ACCOUNTS_DATA_SIZE_EXCEEDED`
 
 **Example query and response**
 ```
