@@ -1,8 +1,7 @@
 # BAM Plugins
 
-This repository contains a collection of tools and data to help developers use BAM Plugins.
-
 ## Maker Prioritization Plugin
-The Maker Plugin allows for high TPS sending of Maker oracle update transactions, only landing the most recent update per batch auction.
+
+MPP enables sequence number coalesced transactions for high TPS write operations. Transactions accepted by the MPP plugin are limit to pure-writes to the enrolled program. CPI is disallowed. A high floor microlamport per CU requirement is in-place.
 
 See `./maker/README.md` for more information. 
