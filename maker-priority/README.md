@@ -77,7 +77,7 @@ Query for events related to a specific transaction signature. Event types includ
 - `commit_attempted` - The connected leader attempted to commit the transaction state. This event will include a reason for failure if the transaction was not committed.
 
 **TransactionEventResponse**
-```
+```rust
 struct TransactionEventResponse {
     pub timestamp: u64,
     pub signature: String,
@@ -90,6 +90,7 @@ struct TransactionEventResponse {
     pub entrypoint: String,
 }
 ```
+
 **Commit Attempt Statuses**
 - `COMMITTED`
 - `ALREADY_PROCESSED`
@@ -102,7 +103,7 @@ struct TransactionEventResponse {
 - `MAX_LOADED_ACCOUNTS_DATA_SIZE_EXCEEDED`
 
 **Example query and response**
-```
+```bash
 curl -sS "https://explorer.bam.dev/api/v1/mpp/transaction?txSignature=8Y99GGBg8u4nqLuVSdyCiooc1vGJtwXEd2MQxmAnj9u2GaSznoDxhYuH9m5z1P4UTrb6YGNjpFFGHNkLwUvJvtn" | jq .
 [
   {
