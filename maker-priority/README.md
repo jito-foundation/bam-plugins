@@ -76,6 +76,19 @@ Query for events related to a specific transaction signature. Event types includ
 - `forwarded` - The transaction was forwarded to the connected leader for potential inclusion in the block. If a transaction was not forwarded, it was likely received too late in the leader rotation.
 - `commit_attempted` - The connected leader attempted to commit the transaction state. This event will include a reason for failure if the transaction was not committed.
 
+
+```http
+GET /api/v1/mpp/transaction?txSignature={txSignature}
+```
+
+#### Query Parameters
+
+| Parameter     | Type   | Required | Description                                           |
+|---------------|--------|----------|-------------------------------------------------------|
+| `txSignature` | string | Yes      | The base58 encoded transaction signature to query.    |
+
+#### Response Schema
+
 **TransactionEventResponse**
 ```rust
 struct TransactionEventResponse {
