@@ -43,22 +43,10 @@ Mainnet program `CkMgJUnsXB85LLoQWznHAtyYtm2eAyVCiTbsxURKvyTt` has been used to 
 The transactions below were received during slot `421288214` 's fourth batch auction.
 
 
-| Sequence Number | Account Keys                                 | Mainnet Transaction Signature                                                            |
-|-----------------|----------------------------------------------|------------------------------------------------------------------------------------------|
-| 67585           | 3xVyE2smd5aVA967PXUg1pvVqYoaPuqXjKkUDZNxQWkt | 5CCn8T9TMPGjyvKjS7pzWMCRLF6hADG9fuyrvBJWJfE3Lxr4b251XKEQHwRthZqppBGZZVqyJLiyu8jCCcNaRUcW |
-|-----------------|----------------------------------------------|------------------------------------------------------------------------------------------|
-| 67783           | A8etPmrQwkhc32zvAhnCtXBEEUjK2N1A3qpei6VL26WS | N/A                                                                                      |
-|-----------------|----------------------------------------------|------------------------------------------------------------------------------------------|
-| 67984           | A8etPmrQwkhc32zvAhnCtXBEEUjK2N1A3qpei6VL26WS | N/A                                                                                      |
-|                 | BBBhtpBDczYRBKEG8bMC9MH1RCwrndPBzynvgdvaJF9a |                                                                                          | 
-|-----------------|----------------------------------------------|------------------------------------------------------------------------------------------|
-| 68108           | A8etPmrQwkhc32zvAhnCtXBEEUjK2N1A3qpei6VL26WS | N/A                                                                                      |
-|                 | BBBhtpBDczYRBKEG8bMC9MH1RCwrndPBzynvgdvaJF9a |                                                                                          |
-|                 | FFbnv9SXM8on3MfmGLFZqyJhjh2Ns9TLEUgMiLe7BHkd |                                                                                          |
-|-----------------|----------------------------------------------|------------------------------------------------------------------------------------------|
-| 68353           | A8etPmrQwkhc32zvAhnCtXBEEUjK2N1A3qpei6VL26WS | 64QVNuSzUqCf8SEVJ8NaXPsFTiJ6DZSS7Nrv47dpjnfUsWjpJ55F1bKWjp5S4nDrn3AvUDmqfCEvf9YLNja4kWeA |                                                                                       
-|                 | BBBhtpBDczYRBKEG8bMC9MH1RCwrndPBzynvgdvaJF9a |                                                                                          |
-|                 | FFbnv9SXM8on3MfmGLFZqyJhjh2Ns9TLEUgMiLe7BHkd |                                                                                          |
-|                 | C36UNg5ZbbB8z7ZTBXQvNJFDZu5uiLmDxJ73FnfBENUk |                                                                                          |
-|-----------------|----------------------------------------------|------------------------------------------------------------------------------------------|
-
+| Sequence Number | Account Keys | Mainnet Transaction Signature |
+|-----------------|--------------|-------------------------------|
+| 67585 | `3xVyE2smd5aVA967PXUg1pvVqYoaPuqXjKkUDZNxQWkt` | `5CCn8T9TMPGjyvKjS7pzWMCRLF6hADG9fuyrvBJWJfE3Lxr4b251XKEQHwRthZqppBGZZVqyJLiyu8jCCcNaRUcW` |
+| 67783 | `A8etPmrQwkhc32zvAhnCtXBEEUjK2N1A3qpei6VL26WS` | `N/A` |
+| 67984 | `A8etPmrQwkhc32zvAhnCtXBEEUjK2N1A3qpei6VL26WS`<br>`BBBhtpBDczYRBKEG8bMC9MH1RCwrndPBzynvgdvaJF9a` | `N/A` |
+| 68108 | `A8etPmrQwkhc32zvAhnCtXBEEUjK2N1A3qpei6VL26WS`<br>`BBBhtpBDczYRBKEG8bMC9MH1RCwrndPBzynvgdvaJF9a`<br>`FFbnv9SXM8on3MfmGLFZqyJhjh2Ns9TLEUgMiLe7BHkd` | `N/A` |
+| 68353 | `A8etPmrQwkhc32zvAhnCtXBEEUjK2N1A3qpei6VL26WS`<br>`BBBhtpBDczYRBKEG8bMC9MH1RCwrndPBzynvgdvaJF9a`<br>`FFbnv9SXM8on3MfmGLFZqyJhjh2Ns9TLEUgMiLe7BHkd`<br>`C36UNg5ZbbB8z7ZTBXQvNJFDZu5uiLmDxJ73FnfBENUk` | `64QVNuSzUqCf8SEVJ8NaXPsFTiJ6DZSS7Nrv47dpjnfUsWjpJ55F1bKWjp5S4nDrn3AvUDmqfCEvf9YLNja4kWeA` |
