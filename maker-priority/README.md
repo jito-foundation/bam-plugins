@@ -92,7 +92,7 @@ GET /api/v1/mpp/transaction?txSignature={txSignature}
 **TransactionEventResponse**
 ```rust
 struct TransactionResponse {
-    pub events: Vec<TransactionEventResponse>,
+    pub events: Vec<TransactionEvent>,
 }
 
 struct TransactionEvent {
