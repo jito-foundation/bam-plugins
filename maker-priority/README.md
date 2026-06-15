@@ -47,6 +47,9 @@ curl -sS http://frankfurt.mainnet.bam.jito.wtf:9090/api/v1/mpp/config
 
 ## Enabled Mainnet Regions
 
+**IMPORTANT**: Periodically poll for these DNS records to ensure your transactions are being sent to the proper BAM Node host in the event of a DNS failover. These records have a TTL of 300 seconds.
+
+
 | Domain      | PTPU Port   |
 | ----------- | ----------- |
 | amsterdam.mainnet.bam.jito.wtf   | 5012       |
@@ -105,6 +108,8 @@ struct TransactionEvent {
     pub event_status: String,
     // Populated on 'received' events only. 'tpu' or 'ptpu'
     pub entrypoint: String,
+    // Unique identifier for the batch in which the transaction was scheduled
+    pub batch_uuid: Option<String>,
 }
 ```
 
@@ -129,7 +134,8 @@ curl -sS "https://explorer.bam.dev/api/v1/mpp/transaction?txSignature=8Y99GGBg8u
     "slot": 416263413,
     "event_type": "received",
     "event_status": "Ok(())",
-    "entrypoint": "ptpu"
+    "entrypoint": "ptpu",
+    "batch_uuid": "96c3c20a-12d6-4059-b17b-742334fad3c6"
   },
   {
     "timestamp": 1777396897309,
@@ -137,7 +143,8 @@ curl -sS "https://explorer.bam.dev/api/v1/mpp/transaction?txSignature=8Y99GGBg8u
     "slot": 416263413,
     "event_type": "forwarded",
     "event_status": "",
-    "entrypoint": ""
+    "entrypoint": "",
+    "batch_uuid": "96c3c20a-12d6-4059-b17b-742334fad3c6"
   },
   {
     "timestamp": 1777396897320,
@@ -145,7 +152,8 @@ curl -sS "https://explorer.bam.dev/api/v1/mpp/transaction?txSignature=8Y99GGBg8u
     "slot": 416263413,
     "event_type": "commit_attempted",
     "event_status": "COMMITTED",
-    "entrypoint": ""
+    "entrypoint": "",
+    "batch_uuid": "96c3c20a-12d6-4059-b17b-742334fad3c6"
   }
 ]
 ```
