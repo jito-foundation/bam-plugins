@@ -26,6 +26,7 @@ Transaction packets are expected to:
 ## Recommendations
 - Since Maker transactions are prioritized for top of the batch, the set loaded accounts data size instruction is often overkill when considering the minimum compute unit price of 20 lamports per compute unit and top of batch prioritization
 - To avoid complex leader tracking logic, we recommend sending price updates to all enabled regions
+- To ensure your transactions are being sent to the proper BAM Node host in the event of a DNS failover, periodically poll for enabled BAM Node via DNS. See `Enabled Mainnet Regions`
 
 
 ## Am I Enrolled? 
