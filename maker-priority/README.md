@@ -26,7 +26,7 @@ Transaction packets are expected to:
 ## Recommendations
 - Since Maker transactions are prioritized for top of the batch, the set loaded accounts data size instruction is often overkill when considering the minimum compute unit price of 20 lamports per compute unit and top of batch prioritization
 - To avoid complex leader tracking logic, we recommend sending price updates to all enabled regions
-- To ensure your transactions are being sent to the proper BAM Node host in the event of a DNS failover, periodically poll for enabled BAM Node via DNS. See `Enabled Mainnet Regions`
+- To ensure your transactions are being sent to the proper BAM Node host in the event of a DNS failover, periodically poll for enabled BAM Node via DNS or derive MPP . See `Enabled Mainnet Regions`
 
 
 ## Am I Enrolled? 
@@ -37,34 +37,47 @@ Query a specific BAM Node to see if your signer and program are enrolled.
 curl -sS http://frankfurt.mainnet.bam.jito.wtf:9090/api/v1/mpp/config
 ```
 
+## What Validators on the Leader Schedule are Connected to BAM Nodes?
+
+```
+curl -sS https://explorer.bam.dev/api/v1/validators
+```
+
+
+## What Nodes are Connected to a Validator?
+
+```
+curl -sS http://frankfurt.mainnet.bam.jito.wtf:9090/api/v1/validators
+```
+
 ## Enabled Regions
 
 | Domain      | PTPU Port   |
 | ----------- | ----------- |
-| dallas.testnet.bam.jito.wtf       | 5012       |
-| frankfurt.testnet.bam.jito.wtf    | 5012       |
-| ny.testnet.bam.jito.wtf           | 5012       |
-| slc.testnet.bam.jito.wtf          | 5012       |
+| dfw.testnet.bam.jito.wtf  | 5012       |
+| fra.testnet.bam.jito.wtf  | 5012       |
+| ewr.testnet.bam.jito.wtf  | 5012       |
+| slc.testnet.bam.jito.wtf  | 5012       |
 
 ## Enabled Mainnet Regions
 
-**IMPORTANT**: Periodically poll for these DNS records to ensure your transactions are being sent to the proper BAM Node host in the event of a DNS failover. These records have a TTL of 300 seconds.
+**IMPORTANT**: Derive UDP destinations from gossip contact info or periodically poll for these DNS records to ensure your transactions are being sent to the proper BAM Node host in the event of a DNS failover. These records have a TTL of 300 seconds.
 
 
 | Domain      | PTPU Port   |
 | ----------- | ----------- |
-| amsterdam.mainnet.bam.jito.wtf   | 5012       |
-| dallas.mainnet.bam.jito.wtf      | 5012       |
-| dublin.mainnet.bam.jito.wtf      | 5012       |
-| frankfurt.mainnet.bam.jito.wtf   | 5012       |
-| lax.mainnet.bam.jito.wtf         | 5012       |
-| london.mainnet.bam.jito.wtf      | 5012       |
-| ny.mainnet.bam.jito.wtf          | 5012       |
-| pittsburgh.mainnet.bam.jito.wtf  | 5012       |
-| singapore.mainnet.bam.jito.wtf   | 5012       |
-| siauliai.mainnet.bam.jito.wtf    | 5012       |
-| slc.mainnet.bam.jito.wtf         | 5012       |
-| tokyo.mainnet.bam.jito.wtf       | 5012       |
+| ams.mainnet.bam.jito.wtf  | 5012       |
+| dfw.mainnet.bam.jito.wtf  | 5012       |
+| dub.mainnet.bam.jito.wtf  | 5012       |
+| fra.mainnet.bam.jito.wtf  | 5012       |
+| lax.mainnet.bam.jito.wtf  | 5012       |
+| lon.mainnet.bam.jito.wtf  | 5012       |
+| ewr.mainnet.bam.jito.wtf  | 5012       |
+| pit.mainnet.bam.jito.wtf  | 5012       |
+| sin.mainnet.bam.jito.wtf  | 5012       |
+| sqq.mainnet.bam.jito.wtf  | 5012       |
+| slc.mainnet.bam.jito.wtf  | 5012       |
+| tyo.mainnet.bam.jito.wtf  | 5012       |
 
 
 
