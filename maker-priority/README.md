@@ -171,3 +171,45 @@ curl -sS "https://explorer.bam.dev/api/v1/mpp/transaction?txSignature=8Y99GGBg8u
   }
 ]
 ```
+
+## MPP Batch Endpoint
+
+This endpoint returns timing information for a specific BAM batch auction within a slot. Use the `batch_uuid` from the transaction endpoint to look up the batch window for transactions scheduled in that batch.
+
+```http
+GET /api/v1/mpp/batch/{slot}/{batch}
+```
+
+#### Path Parameters
+
+| Parameter | Type   | Required | Description                                      |
+|-----------|--------|----------|--------------------------------------------------|
+| `slot`    | u64    | Yes      | The leader slot containing the MPP batch.        |
+| `batch`   | string | Yes      | The UUID of the MPP batch to query.              |
+
+#### Response Schema
+
+**BatchResponse**
+```rust
+struct BatchResponse {
+    pub slot: u64,
+    pub batch_uuid: String,
+    // Unix timestamp in nanoseconds when the batch opened.
+    pub batch_start_time: u64,
+    // Unix timestamp in nanoseconds when the batch closed.
+    pub batch_end_time: u64,
+}
+```
+
+**Example query and response**
+```bash
+curl -sS "https://explorer.bam.dev/api/v1/mpp/batch/425651119/1ef30c93-2a2c-466d-9f63-210d81a9446d" | jq .
+[
+  {
+    "slot": 425651119,
+    "batch_uuid": "1ef30c93-2a2c-466d-9f63-210d81a9446d",
+    "batch_start_time": 1781136355462961432,
+    "batch_end_time": 1781136355473540361
+  }
+]
+```
