@@ -70,11 +70,13 @@ curl -sS http://frankfurt.mainnet.bam.jito.wtf:9090/api/v1/validators
 | dfw.mainnet.bam.jito.wtf  | 5012       |
 | dub.mainnet.bam.jito.wtf  | 5012       |
 | fra.mainnet.bam.jito.wtf  | 5012       |
+| iad.mainnet.bam.jito.wtf  | 5012       |
 | lax.mainnet.bam.jito.wtf  | 5012       |
 | lon.mainnet.bam.jito.wtf  | 5012       |
 | ewr.mainnet.bam.jito.wtf  | 5012       |
 | pit.mainnet.bam.jito.wtf  | 5012       |
 | sin.mainnet.bam.jito.wtf  | 5012       |
+| sea.mainnet.bam.jito.wtf  | 5012       |
 | sqq.mainnet.bam.jito.wtf  | 5012       |
 | slc.mainnet.bam.jito.wtf  | 5012       |
 | tyo.mainnet.bam.jito.wtf  | 5012       |
