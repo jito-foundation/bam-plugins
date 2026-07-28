@@ -50,6 +50,54 @@ curl -sS https://explorer.bam.dev/api/v1/validators
 curl -sS http://frankfurt.mainnet.bam.jito.wtf:9090/api/v1/validators
 ```
 
+## MPP Simulate Endpoint
+
+Use this endpoint to check whether a transaction passes the MPP packet validation checks performed by a BAM node before signature verification.
+
+Despite its name, this endpoint does not execute the transaction or simulate it against a bank. It also does not verify transaction signatures or guarantee that the transaction will be scheduled or land.
+
+```http
+POST /api/v1/mpp/simulate
+Content-Type: application/json
+```
+
+#### Request Body
+
+| Field         | Type   | Required | Description                                      |
+|---------------|--------|----------|--------------------------------------------------|
+| `transaction` | string | Yes      | Base64-encoded wire-format `VersionedTransaction`. |
+
+The request body is limited to 2 KiB, and the decoded transaction must fit within Solana's packet size limit.
+
+**Example request**
+```bash
+curl -sS -X POST "http://fra.mainnet.bam.jito.wtf:9090/api/v1/mpp/simulate" \
+  -H "Content-Type: application/json" \
+  -d '{"transaction":"BASE64_ENCODED_VERSIONED_TRANSACTION"}' | jq .
+```
+
+#### Responses
+
+A transaction that passes MPP validation returns HTTP `200` with its extracted sequence number:
+
+```json
+{
+  "status": "valid",
+  "seqno": "42"
+}
+```
+
+A transaction rejected by MPP validation returns HTTP `200` with the rejection reason:
+
+```json
+{
+  "status": "invalid",
+  "error": "signer is not enrolled"
+}
+```
+
+Malformed base64, an invalid serialized transaction, or a decoded transaction over the packet size limit returns HTTP `400` with `status` set to `invalid` and a description in `error`.
+
 ## Enabled Regions
 
 | Domain      | PTPU Port   |
