@@ -67,6 +67,15 @@ Content-Type: application/json
 |---------------|--------|----------|--------------------------------------------------|
 | `transaction` | string | Yes      | Base64-encoded wire-format `VersionedTransaction`. |
 
+The transaction bytes can be produced using the default `wincode` or `bincode` serialization of a transaction from `solana_transaction` or `solana_sdk`, then base64-encoding the serialized bytes. For example:
+
+```rust
+use base64::{engine::general_purpose::STANDARD, Engine as _};
+
+let transaction_bytes = wincode::serialize(&transaction)?;
+let encoded_transaction = STANDARD.encode(transaction_bytes);
+```
+
 The request body is limited to 2 KiB, and the decoded transaction must fit within Solana's packet size limit.
 
 **Example request**
