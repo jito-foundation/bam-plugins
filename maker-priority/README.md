@@ -215,6 +215,7 @@ curl -sS "https://explorer.bam.dev/api/v1/mpp/batch/425651119/1ef30c93-2a2c-466d
     "batch_end_time": 1781136355473540361
   }
 ]
+```
 
 ## MPP Simulate Endpoint
 
@@ -272,5 +273,3 @@ A transaction rejected by MPP validation returns HTTP `200` with the rejection r
 ```
 
 Malformed base64, an invalid serialized transaction, or a decoded transaction over the packet size limit returns HTTP `400` with `status` set to `invalid` and a description in `error`.
-
-```
