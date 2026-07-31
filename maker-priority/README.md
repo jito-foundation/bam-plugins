@@ -278,7 +278,7 @@ Malformed base64, an invalid serialized transaction, or a decoded transaction ov
 
 The `error` field names the specific check that failed. Validation short-circuits on the first failure in roughly the order below, so a transaction with more than one problem only reports the first.
 
-Reasons marked **config** indicate a problem with the enrollment configuration on the BAM node rather than with your transaction. Verify your enrollment with `/api/v1/mpp/config` and contact Jito Labs if it looks wrong.
+Reasons marked **config** indicate a problem with the enrollment configuration on the BAM node rather than with your transaction. Verify your enrollment with `/api/v1/mpp/config` and contact us if it looks wrong.
 
 **Signer and enrollment**
 
