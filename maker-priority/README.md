@@ -20,7 +20,7 @@ Transaction packets are expected to:
 - The transaction packet can be associated with a specific market via account keys
 - A nonce/seqno is extractable from the transaction packet
 - A compute budget instruction specifying the price per compute unit to at least 20 lamports per compute unit
-- Instructions programs other than the enrolled program and Compute Budget will be rejected by the plugin TPU
+- Instructions from programs other than the enrolled program, Compute Budget, and the System program will be rejected by the plugin TPU
 - Writes to accounts other than enrolled writable accounts will be rejected by the plugin TPU
 
 ## Recommendations
@@ -50,62 +50,6 @@ curl -sS https://explorer.bam.dev/api/v1/validators
 curl -sS http://frankfurt.mainnet.bam.jito.wtf:9090/api/v1/validators
 ```
 
-## MPP Simulate Endpoint
-
-Use this endpoint to check whether a transaction passes the MPP packet validation checks performed by a BAM node before signature verification.
-
-Despite its name, this endpoint does not execute the transaction or simulate it against a bank. It also does not verify transaction signatures or guarantee that the transaction will be scheduled or land.
-
-```http
-POST /api/v1/mpp/simulate
-Content-Type: application/json
-```
-
-#### Request Body
-
-| Field         | Type   | Required | Description                                      |
-|---------------|--------|----------|--------------------------------------------------|
-| `transaction` | string | Yes      | Base64-encoded wire-format `VersionedTransaction`. |
-
-The transaction bytes can be produced using the default `wincode` or `bincode` serialization of a transaction from `solana_transaction` or `solana_sdk`, then base64-encoding the serialized bytes. For example:
-
-```rust
-use base64::{engine::general_purpose::STANDARD, Engine as _};
-
-let transaction_bytes = wincode::serialize(&transaction)?;
-let encoded_transaction = STANDARD.encode(transaction_bytes);
-```
-
-The request body is limited to 2 KiB, and the decoded transaction must fit within Solana's packet size limit.
-
-**Example request**
-```bash
-curl -sS -X POST "http://fra.mainnet.bam.jito.wtf:9090/api/v1/mpp/simulate" \
-  -H "Content-Type: application/json" \
-  -d '{"transaction":"BASE64_ENCODED_VERSIONED_TRANSACTION"}' | jq .
-```
-
-#### Responses
-
-A transaction that passes MPP validation returns HTTP `200` with its extracted sequence number:
-
-```json
-{
-  "status": "valid",
-  "seqno": "42"
-}
-```
-
-A transaction rejected by MPP validation returns HTTP `200` with the rejection reason:
-
-```json
-{
-  "status": "invalid",
-  "error": "signer is not enrolled"
-}
-```
-
-Malformed base64, an invalid serialized transaction, or a decoded transaction over the packet size limit returns HTTP `400` with `status` set to `invalid` and a description in `error`.
 
 ## Enabled Regions
 
@@ -272,3 +216,113 @@ curl -sS "https://explorer.bam.dev/api/v1/mpp/batch/425651119/1ef30c93-2a2c-466d
   }
 ]
 ```
+
+## MPP Simulate Endpoint
+
+Use this endpoint to check whether a transaction passes the MPP packet validation checks performed by a BAM node before signature verification.
+
+Despite its name, this endpoint does not execute the transaction or simulate it against a bank. It also does not verify transaction signatures or guarantee that the transaction will be scheduled or land.
+
+```http
+POST /api/v1/mpp/simulate
+Content-Type: application/json
+```
+
+#### Request Body
+
+| Field         | Type   | Required | Description                                      |
+|---------------|--------|----------|--------------------------------------------------|
+| `transaction` | string | Yes      | Base64-encoded wire-format `VersionedTransaction`. |
+
+The transaction bytes can be produced using the default `wincode` or `bincode` serialization of a transaction from `solana_transaction` or `solana_sdk`, then base64-encoding the serialized bytes. For example:
+
+```rust
+use base64::{engine::general_purpose::STANDARD, Engine as _};
+
+let transaction_bytes = wincode::serialize(&transaction)?;
+let encoded_transaction = STANDARD.encode(transaction_bytes);
+```
+
+The request body is limited to 2 KiB, and the decoded transaction must fit within Solana's packet size limit.
+
+**Example request**
+```bash
+curl -sS -X POST "http://fra.mainnet.bam.jito.wtf:9090/api/v1/mpp/simulate" \
+  -H "Content-Type: application/json" \
+  -d '{"transaction":"BASE64_ENCODED_VERSIONED_TRANSACTION"}' | jq .
+```
+
+#### Responses
+
+A transaction that passes MPP validation returns HTTP `200` with its extracted sequence number:
+
+```json
+{
+  "status": "valid",
+  "seqno": "42"
+}
+```
+
+A transaction rejected by MPP validation returns HTTP `200` with the rejection reason:
+
+```json
+{
+  "status": "invalid",
+  "error": "signer is not enrolled"
+}
+```
+
+Malformed base64, an invalid serialized transaction, or a decoded transaction over the packet size limit returns HTTP `400` with `status` set to `invalid` and a description in `error`.
+
+#### Rejection reasons
+
+The `error` field names the specific check that failed. Validation short-circuits on the first failure in roughly the order below, so a transaction with more than one problem only reports the first.
+
+Reasons marked **config** indicate a problem with the enrollment configuration on the BAM node rather than with your transaction. Verify your enrollment with `/api/v1/mpp/config` and contact us if it looks wrong.
+
+**Signer and enrollment**
+
+| `error` | Meaning |
+|---|---|
+| `signer enrolled for multiple programs` | **config** — A signer is enrolled under two different programs. While this is set, the node rejects *all* MPP traffic, including transactions from unaffected signers. |
+| `signer account missing` | The message carries no account keys, so there is no fee payer to inspect. |
+| `invalid signer count: expected 1, got N` | MPP transactions must have exactly one signer. Enforced to protect the plugin TPU from signature-verification abuse. |
+| `signer is not enrolled` | The fee payer is not an enrolled signer on this node. |
+| `no program mapping for signer` | **config** — The signer is enrolled but no program is configured for it. |
+| `no oracle account filters configured for program` | **config** — The signer's program has no enrolled market accounts, so no writable account can ever be authorized. |
+
+**Accounts and markets**
+
+| `error` | Meaning |
+|---|---|
+| `instruction account index out of bounds` | An instruction references a writable account with no matching account key. Address lookup tables are not supported and produce this error. |
+| `instruction writes to unauthorized account <pubkey>` | An instruction writes an account that is neither your signer nor one of your enrolled market accounts. Checked across every instruction, including System program instructions. |
+| `single-market transaction writes to multiple enrolled writable market accounts` | The program is enrolled in single-market mode but the transaction writes more than one enrolled market. Repeated references to the *same* market are fine. |
+| `transaction does not write to an enrolled writable market account` | No instruction writes any of the program's enrolled market accounts. Read-only references do not count. |
+
+**Instructions**
+
+| `error` | Meaning |
+|---|---|
+| `instruction program id index out of bounds` | An instruction's program-id index has no matching account key. |
+| `transaction contains instruction from disallowed program` | Only the enrolled program, Compute Budget, and System program instructions are permitted. If the offending instruction also writes an account, `instruction writes to unauthorized account` is reported instead. |
+| `market oracle update instruction not found` | No instruction targets the enrolled program. |
+
+**Sequence number**
+
+| `error` | Meaning |
+|---|---|
+| `seqno memcmp not configured for signer/market pair` | **config** — No seqno offset and length are configured for the program. |
+| `seqno length must be 4 or 8 bytes, got N` | **config** — The configured seqno length is neither 4 nor 8 bytes. |
+| `seqno range out of bounds` | The configured seqno offset and length fall outside the instruction's data. Usually means the instruction data is shorter than the enrollment expects. |
+
+**Compute unit price**
+
+| `error` | Meaning |
+|---|---|
+| `compute unit price below configured minimum` | The `SetComputeUnitPrice` value, converted from microlamports to lamports, is below the node's minimum, **or** the instruction is absent. A missing price instruction always fails. |
+
+#### Unsupported transaction formats
+
+- **Address lookup tables** are not supported. Only static account keys are resolved, so a writable lookup-table account is reported as `instruction account index out of bounds`.
+- **Transaction v1 messages** are rejected with `compute unit price below configured minimum`. V1 carries its priority fee in the message config rather than in a Compute Budget instruction, and the plugin TPU only reads `SetComputeUnitPrice` instructions.
