@@ -11,6 +11,7 @@ message PreconfUpdate {
 }
 
 message PreconfSubscribeRequest {
+  // Must be within the last 200 slots
   uint64 slot = 1;
   bytes signature = 2;
 }
