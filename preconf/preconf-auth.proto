@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package bam_preconf;
+
+message PreconfUpdate {
+  uint64 slot = 1;
+  uint32 sequence_id = 2;
+  uint32 bundle_position = 3;
+  bool is_revert_on_error = 4;
+  bytes transaction = 5;
+}
+
+message PreconfSubscribeRequest {
+  // Client-chosen freshness value, not a server-issued challenge. The node
+  // accepts working_slot - 64 ..= working_slot (bounded by slot 0); future slots
+  // are rejected.
+  uint64 slot = 1;
+  // Ed25519 signature over the eight-byte little-endian encoding of slot.
+  bytes signature = 2;
+}
+
+service PreconfStream {
+  rpc Subscribe(PreconfSubscribeRequest) returns (stream PreconfUpdate);
+}
