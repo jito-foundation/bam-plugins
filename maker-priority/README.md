@@ -19,12 +19,12 @@ Transaction packets are expected to:
 - That signer is enrolled in the plugin
 - The transaction packet can be associated with a specific market via account keys
 - A nonce/seqno is extractable from the transaction packet
-- A compute budget instruction specifying the price per compute unit to at least 20 lamports per compute unit
+- A compute budget instruction specifying the price per compute unit to at least 1 lamport per compute unit
 - Instructions programs other than the enrolled program and Compute Budget will be rejected by the plugin TPU
 - Writes to accounts other than enrolled writable accounts will be rejected by the plugin TPU
 
 ## Recommendations
-- Since Maker transactions are prioritized for top of the batch, the set loaded accounts data size instruction is often overkill when considering the minimum compute unit price of 20 lamports per compute unit and top of batch prioritization
+- Since Maker transactions are prioritized for top of the batch, the set loaded accounts data size instruction is often overkill when considering the minimum compute unit price of 1 lamport per compute unit and top of batch prioritization
 - To avoid complex leader tracking logic, we recommend sending price updates to all enabled regions
 - To ensure your transactions are being sent to the proper BAM Node host in the event of a DNS failover, periodically poll for enabled BAM Node via DNS or derive MPP . See `Enabled Mainnet Regions`
 
