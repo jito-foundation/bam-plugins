@@ -4,8 +4,10 @@
 
 MPP enables sequence number coalesced transactions for high TPS write operations. Transactions accepted by the MPP plugin are limit to pure-writes to the enrolled program. CPI is disallowed. A high floor microlamport per CU requirement is in-place to incentivize efficient updates to market state.
 
-See `./maker/README.md` for more information.
+See [`maker-priority/README.md`](maker-priority/README.md) for more information.
 
 ## Preconfirmed Transactions
 
 The BAM preconf firehose contains pre-confirmed but committed to state transactions processed by BAM leaders. Validators can opt-out of having their preconfirmed transactions included in this stream.
+
+See [`preconf/README.md`](preconf/README.md) for the wire format and how to get access.
