@@ -9,6 +9,13 @@ We recommend sending price updates to all enabled regions in-order to avoid main
 
 Transactions are sent in an identical binary format to the standard TPU.
 
+Legacy, v0, and v1 transactions are all supported:
+
+| Version | Max wire size | Priority fee read from |
+| ------- | ------------- | ---------------------- |
+| Legacy / v0 | 1232 bytes | `SetComputeUnitPrice` Compute Budget instruction |
+| v1 | 4096 bytes | Inline transaction config (`priority_fee_lamports` and `compute_unit_limit`) |
+
 This assumes you have sent a configuration to Jito Labs. Configurations should include per-market:
 - The public key of the signer you intend to use for sending transactions
 - The public key of the writable account being updated for a particular market
@@ -19,7 +26,9 @@ Transaction packets are expected to:
 - That signer is enrolled in the plugin
 - The transaction packet can be associated with a specific market via account keys
 - A nonce/seqno is extractable from the transaction packet
-- A compute budget instruction specifying the price per compute unit to at least 1 lamport per compute unit
+- Pay a priority fee of at least 1 lamport per compute unit:
+  - Legacy / v0: a `SetComputeUnitPrice` Compute Budget instruction of at least 1 lamport (1,000,000 micro-lamports) per compute unit
+  - v1: an inline `priority_fee_lamports` of at least 1 lamport × the inline `compute_unit_limit`, and a non-zero `compute_unit_limit`. A Compute Budget instruction in a v1 transaction does not count toward this floor
 - Instructions programs other than the enrolled program and Compute Budget will be rejected by the plugin TPU
 - Writes to accounts other than enrolled writable accounts will be rejected by the plugin TPU
 
